@@ -1,117 +1,180 @@
 # WordPress Development Instructions
 
 ## Project Context
-- Modern WordPress development
-- Custom theme/plugin development
-- Block editor (Gutenberg) integration
-- Performance optimization
+- WordPress theme/plugin development
+- PHP 8.x development
+- Custom post types and taxonomies
+- Database optimization
+- Security best practices
 
 ## Code Style Guidelines
-- Follow WordPress coding standards
-- Use proper prefix for functions
-- Follow proper hook naming
-- Implement proper sanitization
-- Use proper escaping functions
+- WordPress coding standards
+- PHP 8.x features usage
+- Proper hook usage
+- Database query optimization
+- Security sanitization patterns
 
 ## Architecture Patterns
-- Follow MVC-like structure
-- Use proper template hierarchy
-- Implement proper plugin architecture
-- Follow proper action/filter patterns
-- Use proper block patterns
+- MVC-like structure
+- Plugin architecture
+- Theme development
+- Custom post types
+- REST API endpoints
 
 ## Testing Requirements
-- Unit test PHP functions
-- Test block editor components
-- Validate hook interactions
-- Test security measures
-- Implement integration tests
+- PHP unit testing
+- WordPress testing
+- Integration testing
+- Security testing
+- Performance testing
 
 ## Documentation Standards
-- Follow PHPDoc standards
-- Document action/filter hooks
-- Include block documentation
-- Maintain changelog
-- Document setup requirements
+- PHP DocBlocks
+- Hook documentation
+- API documentation
+- Setup instructions
+- Deployment guides
 
 ## Project-Specific Rules
-### Security Practices
-- Validate input data
-- Escape output
-- Use nonces for forms
-- Follow capability checks
-- Implement proper authentication
-
-### Block Development
-- Follow block API standards
-- Use proper attributes
-- Implement proper transforms
-- Follow accessibility guidelines
-- Use proper block variations
-
-## Common Patterns
+### WordPress Development
 ```php
-// Plugin Template
-<?php
-/**
- * Plugin Name: Custom Feature
- * Description: Implements custom functionality
- * Version: 1.0.0
- * Author: Your Name
- */
-
-defined('ABSPATH') || exit;
-
-class CustomFeature {
+// Plugin Structure Pattern
+class CustomPlugin {
     private static $instance = null;
-
-    public static function get_instance() {
+    
+    public static function getInstance(): self {
         if (null === self::$instance) {
             self::$instance = new self();
         }
         return self::$instance;
     }
-
+    
     private function __construct() {
-        add_action('init', [$this, 'init']);
+        $this->initHooks();
     }
-
-    public function init() {
-        // Initialize plugin
+    
+    private function initHooks(): void {
+        add_action('init', [$this, 'registerPostTypes']);
+        add_action('rest_api_init', [$this, 'registerEndpoints']);
+    }
+    
+    public function registerPostTypes(): void {
+        register_post_type('custom_type', [
+            'labels' => [
+                'name' => __('Custom Types', 'textdomain'),
+                'singular_name' => __('Custom Type', 'textdomain'),
+            ],
+            'public' => true,
+            'show_in_rest' => true,
+            'supports' => ['title', 'editor', 'thumbnail'],
+            'has_archive' => true,
+        ]);
+    }
+    
+    public function registerEndpoints(): void {
+        register_rest_route('custom/v1', '/items', [
+            'methods' => 'GET',
+            'callback' => [$this, 'getItems'],
+            'permission_callback' => [$this, 'checkPermission'],
+        ]);
+    }
+    
+    public function checkPermission(): bool {
+        return current_user_can('edit_posts');
     }
 }
 
-CustomFeature::get_instance();
-
-// Block Template
-register_block_type('namespace/block-name', [
-    'attributes' => [
-        'content' => [
-            'type' => 'string',
-            'default' => '',
-        ],
-    ],
-    'render_callback' => function($attributes) {
-        $content = esc_html($attributes['content']);
-        return sprintf(
-            '<div class="custom-block">%s</div>',
-            $content
+// Database Query Pattern
+class CustomRepository {
+    private $wpdb;
+    
+    public function __construct() {
+        global $wpdb;
+        $this->wpdb = $wpdb;
+    }
+    
+    public function getItems(array $args = []): array {
+        $defaults = [
+            'limit' => 10,
+            'offset' => 0,
+            'status' => 'publish',
+        ];
+        
+        $args = wp_parse_args($args, $defaults);
+        
+        $query = $this->wpdb->prepare(
+            "SELECT * FROM {$this->wpdb->posts}
+            WHERE post_type = %s
+            AND post_status = %s
+            LIMIT %d OFFSET %d",
+            'custom_type',
+            $args['status'],
+            $args['limit'],
+            $args['offset']
         );
-    },
-]);
+        
+        return $this->wpdb->get_results($query);
+    }
+}
 
-// Ajax Handler Template
-add_action('wp_ajax_custom_action', 'handle_custom_action');
-function handle_custom_action() {
-    check_ajax_referer('custom-nonce', 'nonce');
+// Theme Functions Pattern
+function theme_setup(): void {
+    add_theme_support('title-tag');
+    add_theme_support('post-thumbnails');
+    add_theme_support('html5', [
+        'search-form',
+        'comment-form',
+        'comment-list',
+        'gallery',
+        'caption',
+    ]);
     
-    if (!current_user_can('edit_posts')) {
-        wp_send_json_error('Insufficient permissions');
+    register_nav_menus([
+        'primary' => __('Primary Menu', 'textdomain'),
+        'footer' => __('Footer Menu', 'textdomain'),
+    ]);
+}
+add_action('after_setup_theme', 'theme_setup');
+
+// Security Pattern
+function secure_request(array $data): array {
+    $clean = [];
+    
+    foreach ($data as $key => $value) {
+        if (is_array($value)) {
+            $clean[$key] = secure_request($value);
+        } else {
+            $clean[$key] = sanitize_text_field($value);
+        }
     }
     
-    $data = sanitize_text_field($_POST['data']);
-    // Process data
-    
-    wp_send_json_success(['message' => 'Success']);
+    return $clean;
 }
-```
+
+// REST API Pattern
+function register_custom_endpoint(): void {
+    register_rest_route('custom/v1', '/data', [
+        'methods' => ['GET', 'POST'],
+        'callback' => function($request) {
+            $params = secure_request($request->get_params());
+            
+            if ($request->get_method() === 'POST') {
+                return handle_post_request($params);
+            }
+            
+            return handle_get_request($params);
+        },
+        'permission_callback' => function() {
+            return current_user_can('edit_posts');
+        },
+        'args' => [
+            'id' => [
+                'required' => true,
+                'validate_callback' => function($param) {
+                    return is_numeric($param);
+                }
+            ]
+        ]
+    ]);
+}
+add_action('rest_api_init', 'register_custom_endpoint');

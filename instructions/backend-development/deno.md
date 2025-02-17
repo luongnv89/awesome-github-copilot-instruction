@@ -1,69 +1,51 @@
 # Deno Development Instructions
 
 ## Project Context
-- Modern TypeScript runtime with Deno
-- Secure by default execution
-- Built-in tooling
-- Web standard APIs
+- Deno runtime environment
+- TypeScript-first development
+- Standard library usage
+- Security-first approach
+- Modern web APIs
 
 ## Code Style Guidelines
-- Use TypeScript strict mode
-- Follow URL-based imports
-- Implement proper permissions
-- Use web standard APIs
-- Follow proper error handling
+- TypeScript strict mode
+- Web standard APIs
+- Permission handling
+- Import map usage
+- Module patterns
 
 ## Architecture Patterns
-- Use proper module structure
-- Implement proper middleware
-- Follow Oak framework patterns
-- Use proper testing patterns
-- Implement proper file I/O
+- Oak middleware pattern
+- Module organization
+- Permission boundaries
+- Testing structure
+- Dependency management
 
 ## Testing Requirements
-- Use Deno.test API
-- Implement permission tests
-- Test HTTP endpoints
-- Validate file operations
-- Test web standard APIs
+- Unit testing with Deno.test
+- Integration testing
+- Permission testing
+- Web standard testing
+- API testing
 
 ## Documentation Standards
-- Document permissions needed
-- Include import map details
-- Document API endpoints
-- Maintain type documentation
-- Include setup instructions
+- JSDoc documentation
+- Permission documentation
+- API documentation
+- Module documentation
+- Deployment guides
 
 ## Project-Specific Rules
-### Security Patterns
-- Use proper permissions
-- Implement proper CORS
-- Follow proper file access
-- Use proper env handling
-- Implement proper validation
-
-## Common Patterns
+### Deno Patterns
 ```typescript
-// Server Template
+// HTTP Server Pattern
 import { Application, Router } from "https://deno.land/x/oak/mod.ts";
+import { oakCors } from "https://deno.land/x/cors/mod.ts";
 
 const app = new Application();
 const router = new Router();
 
-router.get("/api/items", async (ctx) => {
-  try {
-    const items = await getItems();
-    ctx.response.body = items;
-  } catch (error) {
-    ctx.response.status = 500;
-    ctx.response.body = { error: error.message };
-  }
-});
-
-app.use(router.routes());
-app.use(router.allowedMethods());
-
-// Middleware Template
+// Middleware Pattern
 app.use(async (ctx, next) => {
   try {
     await next();
@@ -73,30 +55,157 @@ app.use(async (ctx, next) => {
   }
 });
 
-// File Operations
-const decoder = new TextDecoder("utf-8");
-const encoder = new TextEncoder();
+app.use(oakCors());
 
-async function readJsonFile<T>(path: string): Promise<T> {
-  const content = await Deno.readFile(path);
-  return JSON.parse(decoder.decode(content));
-}
-
-async function writeJsonFile(path: string, data: unknown): Promise<void> {
-  const content = encoder.encode(JSON.stringify(data, null, 2));
-  await Deno.writeFile(path, content);
-}
-
-// Testing Template
-Deno.test({
-  name: "API endpoint test",
-  async fn() {
-    const res = await fetch("http://localhost:8000/api/items");
-    const data = await res.json();
-    assertEquals(res.status, 200);
-    assert(Array.isArray(data));
-  },
-  sanitizeResources: false,
-  sanitizeOps: false,
+// Router Pattern
+router.get("/api/items", async (ctx) => {
+  const items = await loadItems();
+  ctx.response.body = items;
 });
-```
+
+router.post("/api/items", async (ctx) => {
+  const body = ctx.request.body();
+  const item = await body.value;
+  const savedItem = await saveItem(item);
+  ctx.response.body = savedItem;
+});
+
+// Database Integration
+import { DB } from "https://deno.land/x/sqlite/mod.ts";
+
+class Database {
+  private db: DB;
+
+  constructor() {
+    this.db = new DB("data.db");
+    this.init();
+  }
+
+  private init() {
+    this.db.execute(`
+      CREATE TABLE IF NOT EXISTS items (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+  }
+
+  async getItems(): Promise<Item[]> {
+    const rows = this.db.query("SELECT * FROM items");
+    return rows.map(row => ({
+      id: row[0],
+      name: row[1],
+      createdAt: row[2]
+    }));
+  }
+}
+
+// Testing Pattern
+import {
+  assertEquals,
+  assertNotEquals,
+} from "https://deno.land/std/testing/asserts.ts";
+
+Deno.test("API endpoint test", async () => {
+  const response = await fetch("http://localhost:8000/api/items");
+  const data = await response.json();
+  assertEquals(response.status, 200);
+  assertNotEquals(data.length, 0);
+});
+
+// WebSocket Pattern
+app.use(async (ctx) => {
+  if (!ctx.isUpgradable) {
+    ctx.throw(501);
+  }
+  const ws = await ctx.upgrade();
+  
+  ws.onmessage = async (msg) => {
+    const data = JSON.parse(msg.data);
+    // Handle message
+    ws.send(JSON.stringify({ status: "received" }));
+  };
+});
+
+// File System Operations
+async function readConfig(): Promise<Config> {
+  const text = await Deno.readTextFile("./config.json");
+  return JSON.parse(text);
+}
+
+async function writeLog(message: string): Promise<void> {
+  await Deno.writeTextFile(
+    "./log.txt",
+    `${new Date().toISOString()} - ${message}\n`,
+    { append: true }
+  );
+}
+
+// Permission Handling
+async function secureOperation() {
+  const status = await Deno.permissions.request({ 
+    name: "read",
+    path: "./config.json"
+  });
+  
+  if (status.state === "granted") {
+    return await readConfig();
+  }
+  
+  throw new Error("Permission denied");
+}
+
+// Module Pattern
+export interface Service {
+  execute(): Promise<void>;
+}
+
+export class ServiceImpl implements Service {
+  constructor(private deps: Dependencies) {}
+
+  async execute(): Promise<void> {
+    // Implementation
+  }
+}
+
+// Custom Error Handling
+class AppError extends Error {
+  constructor(
+    message: string,
+    public status: number = 500
+  ) {
+    super(message);
+    this.name = "AppError";
+  }
+}
+
+// Dependency Injection Pattern
+interface Dependencies {
+  database: Database;
+  logger: Logger;
+}
+
+class Container {
+  private static instance: Container;
+  private deps: Map<string, any>;
+
+  private constructor() {
+    this.deps = new Map();
+  }
+
+  static getInstance(): Container {
+    if (!Container.instance) {
+      Container.instance = new Container();
+    }
+    return Container.instance;
+  }
+
+  register<T>(key: string, value: T): void {
+    this.deps.set(key, value);
+  }
+
+  resolve<T>(key: string): T {
+    return this.deps.get(key);
+  }
+}

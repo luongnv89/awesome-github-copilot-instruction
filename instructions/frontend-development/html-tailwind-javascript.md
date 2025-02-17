@@ -1,97 +1,130 @@
 # HTML, Tailwind CSS, and JavaScript Development Instructions
 
 ## Project Context
-- Modern frontend development
-- Utility-first CSS with Tailwind
-- Vanilla JavaScript optimization
-- Progressive enhancement
+- Modern web development
+- Responsive design
+- Interactive UI components
+- Accessibility standards
+- Performance optimization
 
 ## Code Style Guidelines
-- Use semantic HTML5 elements
-- Follow BEM-like Tailwind patterns
-- Implement proper JavaScript modules
-- Use proper accessibility attributes
-- Follow proper responsive design
+- Semantic HTML
+- Tailwind class organization
+- JavaScript best practices
+- Component structure
+- Accessibility patterns
 
 ## Architecture Patterns
-- Use proper component structure
-- Implement proper state management
-- Follow proper event delegation
-- Use proper module bundling
-- Implement proper asset optimization
+- Component composition
+- State management
+- Event delegation
+- CSS organization
+- Module patterns
 
 ## Testing Requirements
-- Test JavaScript functionality
-- Validate responsive layouts
-- Test accessibility features
-- Implement E2E testing
-- Test browser compatibility
+- Component testing
+- Visual testing
+- Accessibility testing
+- Performance testing
+- Cross-browser testing
 
 ## Documentation Standards
-- Document component patterns
-- Include responsive breakpoints
-- Document JavaScript modules
-- Maintain style guide
-- Include accessibility notes
+- Component documentation
+- Accessibility notes
+- Tailwind customization
+- JavaScript APIs
+- Browser support
 
 ## Project-Specific Rules
-### Tailwind Patterns
-- Use proper utility composition
-- Implement proper responsive classes
-- Follow proper dark mode patterns
-- Use proper container queries
-- Implement proper custom variants
-
-## Common Patterns
+### Web Development Patterns
 ```html
-<!-- Component Template -->
-<article class="card group hover:shadow-lg transition-shadow duration-300">
-  <header class="card-header p-4 bg-gray-50">
-    <h2 class="text-lg font-semibold text-gray-800">
-      {{ title }}
-    </h2>
-  </header>
-  
-  <div class="card-body p-4">
-    <p class="text-gray-600">
-      {{ content }}
-    </p>
-  </div>
-  
-  <footer class="card-footer p-4 border-t">
-    <button 
-      class="btn btn-primary"
-      data-action="click->card#expand">
-      Read More
-    </button>
-  </footer>
-</article>
+<!-- Component Pattern -->
+<template data-component="card">
+  <article class="rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow">
+    <div class="aspect-video relative">
+      <img 
+        src="placeholder.jpg" 
+        alt="Card image" 
+        class="object-cover w-full h-full"
+        loading="lazy"
+      >
+    </div>
+    <div class="p-4 space-y-2">
+      <h3 class="text-lg font-semibold text-gray-900 line-clamp-2">
+        Card Title
+      </h3>
+      <p class="text-gray-600 line-clamp-3">
+        Card description that might be longer and need truncation...
+      </p>
+      <button 
+        class="inline-flex items-center px-4 py-2 rounded-md bg-blue-600 text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+        type="button"
+      >
+        Learn More
+      </button>
+    </div>
+  </article>
+</template>
 
-<!-- JavaScript Module -->
-class CardComponent {
+<!-- JavaScript Component -->
+class Component {
   constructor(element) {
     this.element = element;
-    this.bindEvents();
-  }
-
-  bindEvents() {
-    this.element.addEventListener('click', e => {
-      const action = e.target.dataset.action;
-      if (action === 'card#expand') {
-        this.expand();
+    this.state = new Proxy(this.getInitialState(), {
+      set: (target, property, value) => {
+        target[property] = value;
+        this.render();
+        return true;
       }
     });
+    
+    this.init();
   }
-
-  expand() {
-    this.element.classList.toggle('is-expanded');
+  
+  getInitialState() {
+    return {};
   }
+  
+  init() {
+    this.bindEvents();
+  }
+  
+  bindEvents() {}
+  
+  render() {}
 }
 
-// Initialize components
-document.querySelectorAll('.card').forEach(card => {
-  new CardComponent(card);
-});
+// Card Component Implementation
+class Card extends Component {
+  getInitialState() {
+    return {
+      expanded: false,
+      loading: false
+    };
+  }
+  
+  bindEvents() {
+    this.element.querySelector('button')
+      .addEventListener('click', () => this.handleClick());
+  }
+  
+  async handleClick() {
+    this.state.loading = true;
+    try {
+      const data = await this.fetchDetails();
+      this.state.expanded = true;
+      this.state.details = data;
+    } catch (error) {
+      console.error('Failed to load details:', error);
+    } finally {
+      this.state.loading = false;
+    }
+  }
+  
+  render() {
+    // Update DOM based on state
+  }
+}
 
 // Utility Functions
 const debounce = (fn, delay) => {
@@ -102,40 +135,119 @@ const debounce = (fn, delay) => {
   };
 };
 
-const observeIntersection = (elements, callback, options = {}) => {
+const observeIntersection = (element, callback, options = {}) => {
   const observer = new IntersectionObserver(entries => {
-    entries.forEach(entry => callback(entry));
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        callback(entry);
+      }
+    });
   }, options);
   
-  elements.forEach(element => observer.observe(element));
-  return observer;
+  observer.observe(element);
+  return () => observer.disconnect();
 };
-```
 
-```css
-/* Tailwind Custom Components */
-@layer components {
-  .btn {
-    @apply px-4 py-2 rounded-lg font-medium transition-colors;
+// Form Validation
+class FormValidator {
+  constructor(form) {
+    this.form = form;
+    this.fields = {};
+    this.init();
   }
   
-  .btn-primary {
-    @apply bg-blue-500 text-white hover:bg-blue-600;
+  init() {
+    this.form.setAttribute('novalidate', '');
+    this.setupFields();
+    this.bindEvents();
   }
   
-  .card {
-    @apply bg-white rounded-lg border border-gray-200;
+  setupFields() {
+    this.form.querySelectorAll('[data-validate]').forEach(field => {
+      const rules = field.dataset.validate.split(',');
+      this.fields[field.name] = { element: field, rules };
+    });
+  }
+  
+  validate() {
+    let isValid = true;
+    
+    Object.entries(this.fields).forEach(([name, field]) => {
+      const value = field.element.value;
+      const errors = this.validateField(value, field.rules);
+      
+      if (errors.length) {
+        isValid = false;
+        this.showErrors(field.element, errors);
+      } else {
+        this.clearErrors(field.element);
+      }
+    });
+    
+    return isValid;
   }
 }
 
-/* Dark Mode Variants */
-@media (prefers-color-scheme: dark) {
-  .card {
-    @apply bg-gray-800 border-gray-700;
+// Modal Component
+class Modal extends Component {
+  static template = `
+    <div class="fixed inset-0 z-50 flex items-center justify-center">
+      <div class="fixed inset-0 bg-black bg-opacity-50 transition-opacity"></div>
+      <div class="relative bg-white rounded-lg shadow-xl max-w-lg w-full mx-4">
+        <div class="p-4">
+          <button 
+            type="button"
+            class="absolute top-4 right-4 text-gray-400 hover:text-gray-500"
+            aria-label="Close"
+          >
+            <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+          <div class="modal-content"></div>
+        </div>
+      </div>
+    </div>
+  `;
+  
+  constructor(content) {
+    super();
+    this.content = content;
+    this.render();
+    this.show();
   }
   
-  .btn-primary {
-    @apply bg-blue-600 hover:bg-blue-700;
+  show() {
+    document.body.appendChild(this.element);
+    document.body.classList.add('overflow-hidden');
+  }
+  
+  hide() {
+    this.element.remove();
+    document.body.classList.remove('overflow-hidden');
   }
 }
-```
+
+// Accessibility Helpers
+const A11y = {
+  handleTabTrapping(element) {
+    const focusableElements = element.querySelectorAll(
+      'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+    );
+    
+    const firstFocusable = focusableElements[0];
+    const lastFocusable = focusableElements[focusableElements.length - 1];
+    
+    element.addEventListener('keydown', e => {
+      if (e.key === 'Tab') {
+        if (e.shiftKey && document.activeElement === firstFocusable) {
+          e.preventDefault();
+          lastFocusable.focus();
+        } else if (!e.shiftKey && document.activeElement === lastFocusable) {
+          e.preventDefault();
+          firstFocusable.focus();
+        }
+      }
+    });
+  }
+};

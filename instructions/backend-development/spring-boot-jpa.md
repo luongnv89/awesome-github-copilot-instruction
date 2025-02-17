@@ -1,85 +1,97 @@
 # Java Spring Boot JPA Development Instructions
 
 ## Project Context
-- Spring Boot application development
-- JPA/Hibernate for data persistence
-- RESTful API development
-- Microservices architecture
+- Spring Boot application
+- JPA/Hibernate ORM
+- RESTful API design
+- Database integration
+- Service architecture
 
 ## Code Style Guidelines
-- Follow Java naming conventions
-- Use proper package structure
-- Implement proper exception handling
-- Follow SOLID principles
-- Use proper lombok annotations
+- Spring Boot best practices
+- JPA entity design
+- Repository patterns
+- Service layer patterns
+- Controller patterns
 
 ## Architecture Patterns
-- Follow layered architecture:
-  - Controller
-  - Service
-  - Repository
-  - Entity
-- Use proper DTO patterns
-- Implement proper validation
-- Follow proper transaction management
-- Use proper dependency injection
+- Layered architecture
+- Repository pattern
+- Service layer
+- DTO pattern
+- Exception handling
 
 ## Testing Requirements
-- Unit test with JUnit 5
-- Integration tests with TestContainers
-- Test repository layers
-- Validate service logic
-- Test API endpoints
+- Unit testing
+- Integration testing
+- Repository testing
+- Service testing
+- Controller testing
 
 ## Documentation Standards
-- Use JavaDoc for public APIs
-- Document REST endpoints
-- Include OpenAPI/Swagger
-- Maintain README
-- Document configuration properties
+- API documentation
+- Entity documentation
+- Service documentation
+- Exception documentation
+- Setup instructions
 
 ## Project-Specific Rules
-### JPA Best Practices
-- Use proper entity relationships
-- Implement proper lazy loading
-- Follow proper indexing
-- Use proper fetch strategies
-- Implement proper caching
-
-## Common Patterns
+### Spring Boot Patterns
 ```java
-// Entity Template
+// Entity Pattern
 @Entity
 @Table(name = "users")
-@Getter
-@Setter
+@Data
+@Builder
 @NoArgsConstructor
+@AllArgsConstructor
 public class User {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(nullable = false, unique = true)
+    private String email;
+
     @Column(nullable = false)
     private String name;
 
-    @Email
-    @Column(unique = true)
-    private String email;
+    @JsonIgnore
+    private String password;
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
     private List<Order> orders = new ArrayList<>();
 }
 
-// Repository Template
+// DTO Pattern
+@Data
+@Builder
+public class UserDTO {
+    private Long id;
+    private String email;
+    private String name;
+
+    public static UserDTO fromEntity(User user) {
+        return UserDTO.builder()
+                .id(user.getId())
+                .email(user.getEmail())
+                .name(user.getName())
+                .build();
+    }
+}
+
+// Repository Pattern
 @Repository
 public interface UserRepository extends JpaRepository<User, Long> {
     Optional<User> findByEmail(String email);
     
-    @Query("SELECT u FROM User u WHERE u.lastLoginDate > :date")
-    List<User> findActiveUsers(@Param("date") LocalDateTime date);
+    @Query("SELECT u FROM User u LEFT JOIN FETCH u.orders WHERE u.id = :id")
+    Optional<User> findByIdWithOrders(@Param("id") Long id);
+    
+    boolean existsByEmail(String email);
 }
 
-// Service Template
+// Service Pattern
 @Service
 @Transactional
 @RequiredArgsConstructor
@@ -88,20 +100,28 @@ public class UserService {
     private final PasswordEncoder passwordEncoder;
 
     public UserDTO createUser(CreateUserRequest request) {
-        if (userRepository.findByEmail(request.getEmail()).isPresent()) {
-            throw new UserAlreadyExistsException(request.getEmail());
+        if (userRepository.existsByEmail(request.getEmail())) {
+            throw new EmailAlreadyExistsException(request.getEmail());
         }
 
-        User user = new User();
-        user.setEmail(request.getEmail());
-        user.setName(request.getName());
-        user.setPassword(passwordEncoder.encode(request.getPassword()));
+        User user = User.builder()
+                .email(request.getEmail())
+                .name(request.getName())
+                .password(passwordEncoder.encode(request.getPassword()))
+                .build();
 
-        return UserDTO.from(userRepository.save(user));
+        user = userRepository.save(user);
+        return UserDTO.fromEntity(user);
+    }
+
+    public UserDTO getUserById(Long id) {
+        return userRepository.findById(id)
+                .map(UserDTO::fromEntity)
+                .orElseThrow(() -> new UserNotFoundException(id));
     }
 }
 
-// Controller Template
+// Controller Pattern
 @RestController
 @RequestMapping("/api/users")
 @RequiredArgsConstructor
@@ -110,20 +130,130 @@ public class UserController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public UserDTO createUser(@Valid @RequestBody CreateUserRequest request) {
-        return userService.createUser(request);
+    public ResponseEntity<UserDTO> createUser(@Valid @RequestBody CreateUserRequest request) {
+        UserDTO user = userService.createUser(request);
+        return ResponseEntity
+                .created(URI.create("/api/users/" + user.getId()))
+                .body(user);
     }
 
     @GetMapping("/{id}")
-    public UserDTO getUser(@PathVariable Long id) {
-        return userService.findById(id)
-            .orElseThrow(() -> new UserNotFoundException(id));
-    }
-
-    @ExceptionHandler(UserNotFoundException.class)
-    @ResponseStatus(HttpStatus.NOT_FOUND)
-    public ErrorResponse handleUserNotFound(UserNotFoundException ex) {
-        return new ErrorResponse(ex.getMessage());
+    public ResponseEntity<UserDTO> getUser(@PathVariable Long id) {
+        return ResponseEntity.ok(userService.getUserById(id));
     }
 }
-```
+
+// Exception Handling
+@RestControllerAdvice
+public class GlobalExceptionHandler {
+    @ExceptionHandler(UserNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleUserNotFound(UserNotFoundException ex) {
+        ErrorResponse error = new ErrorResponse(
+            HttpStatus.NOT_FOUND.value(),
+            ex.getMessage()
+        );
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error);
+    }
+
+    @ExceptionHandler(EmailAlreadyExistsException.class)
+    public ResponseEntity<ErrorResponse> handleEmailExists(EmailAlreadyExistsException ex) {
+        ErrorResponse error = new ErrorResponse(
+            HttpStatus.CONFLICT.value(),
+            ex.getMessage()
+        );
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(error);
+    }
+}
+
+// Configuration Pattern
+@Configuration
+@EnableJpaAuditing
+public class JpaConfig {
+    @Bean
+    public AuditorAware<String> auditorProvider() {
+        return () -> Optional.ofNullable(SecurityContextHolder.getContext())
+                .map(SecurityContext::getAuthentication)
+                .filter(Authentication::isAuthenticated)
+                .map(Authentication::getName);
+    }
+}
+
+// Test Pattern
+@SpringBootTest
+@AutoConfigureMockMvc
+class UserControllerTest {
+    @Autowired
+    private MockMvc mockMvc;
+
+    @Autowired
+    private ObjectMapper objectMapper;
+
+    @MockBean
+    private UserService userService;
+
+    @Test
+    void createUser_Success() throws Exception {
+        CreateUserRequest request = new CreateUserRequest(
+            "test@example.com",
+            "Test User",
+            "password123"
+        );
+
+        UserDTO expectedResponse = UserDTO.builder()
+                .id(1L)
+                .email(request.getEmail())
+                .name(request.getName())
+                .build();
+
+        when(userService.createUser(any())).thenReturn(expectedResponse);
+
+        mockMvc.perform(post("/api/users")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.id").value(expectedResponse.getId()))
+                .andExpect(jsonPath("$.email").value(expectedResponse.getEmail()))
+                .andExpect(jsonPath("$.name").value(expectedResponse.getName()));
+    }
+}
+
+// Service Test Pattern
+@ExtendWith(MockitoExtension.class)
+class UserServiceTest {
+    @Mock
+    private UserRepository userRepository;
+
+    @Mock
+    private PasswordEncoder passwordEncoder;
+
+    @InjectMocks
+    private UserService userService;
+
+    @Test
+    void createUser_Success() {
+        CreateUserRequest request = new CreateUserRequest(
+            "test@example.com",
+            "Test User",
+            "password123"
+        );
+
+        when(userRepository.existsByEmail(request.getEmail())).thenReturn(false);
+        when(passwordEncoder.encode(request.getPassword())).thenReturn("encoded_password");
+
+        User savedUser = User.builder()
+                .id(1L)
+                .email(request.getEmail())
+                .name(request.getName())
+                .password("encoded_password")
+                .build();
+
+        when(userRepository.save(any())).thenReturn(savedUser);
+
+        UserDTO result = userService.createUser(request);
+
+        assertNotNull(result);
+        assertEquals(savedUser.getId(), result.getId());
+        assertEquals(savedUser.getEmail(), result.getEmail());
+        assertEquals(savedUser.getName(), result.getName());
+    }
+}

@@ -1,118 +1,171 @@
-# React TypeScript with Shadcn/UI Instructions
+# React TypeScript with Shadcn/UI Development Instructions
 
 ## Project Context
-- React 18+ with TypeScript
+- Modern React development
+- TypeScript integration
 - Shadcn/UI component system
 - Tailwind CSS styling
-- Accessibility-first development
+- Accessibility-first approach
 
 ## Code Style Guidelines
-- Use TypeScript strict mode
-- Follow component-first architecture
-- Implement proper type definitions
-- Use proper naming conventions:
-  - Components: PascalCase
-  - Hooks: useCustomHook
-  - Utils: camelCase
-  - Types: PascalCase
+- TypeScript strict mode
+- Component composition patterns
+- Proper prop typing
+- Custom hook patterns
+- State management practices
 
 ## Architecture Patterns
-- Follow Atomic Design principles
-- Use proper component composition
-- Implement proper state management
-- Follow proper routing patterns
-- Use proper form handling
+- Feature-based organization
+- Component architecture
+- Custom hooks design
+- State management flow
+- Theme configuration
 
 ## Testing Requirements
-- Use React Testing Library
-- Test component interactions
-- Validate accessibility
-- Test theme switching
-- Test form validations
+- Component unit testing
+- Hook testing
+- Integration testing
+- Accessibility testing
+- Theme testing
 
 ## Documentation Standards
-- Document component APIs
-- Include usage examples
-- Document theme customization
-- Maintain style guide
-- Document accessibility features
+- Component documentation
+- Hook documentation
+- Theme customization
+- Accessibility notes
+- API documentation
 
 ## Project-Specific Rules
-### Component Structure
-- Follow Shadcn/UI patterns
-- Use proper variant patterns
-- Implement proper theming
-- Use proper form components
-- Follow proper layout patterns
-
-## Common Patterns
+### Component Development
 ```typescript
-// Component Template with Variants
-import * as React from "react"
-import { cva, type VariantProps } from "class-variance-authority"
-import { cn } from "@/lib/utils"
+// Component Pattern with Shadcn/UI
+import * as React from 'react'
+import { Button } from '@/components/ui/button'
+import { Card } from '@/components/ui/card'
+import { Input } from '@/components/ui/input'
+import { cn } from '@/lib/utils'
 
-const buttonVariants = cva(
-  "inline-flex items-center justify-center rounded-md text-sm font-medium",
-  {
-    variants: {
-      variant: {
-        default: "bg-primary text-primary-foreground hover:bg-primary/90",
-        secondary: "bg-secondary text-secondary-foreground hover:bg-secondary/80",
-      },
-      size: {
-        default: "h-10 px-4 py-2",
-        sm: "h-9 rounded-md px-3",
-        lg: "h-11 rounded-md px-8",
-      },
-    },
-    defaultVariants: {
-      variant: "default",
-      size: "default",
-    },
-  }
-)
+interface FeatureCardProps extends React.HTMLAttributes<HTMLDivElement> {
+  title: string
+  description: string
+  onAction?: () => void
+}
 
-interface ButtonProps
-  extends React.ButtonHTMLAttributes<HTMLButtonElement>,
-    VariantProps<typeof buttonVariants> {}
-
-const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
-  ({ className, variant, size, ...props }, ref) => {
+export const FeatureCard = React.forwardRef<HTMLDivElement, FeatureCardProps>(
+  ({ title, description, className, onAction, ...props }, ref) => {
     return (
-      <button
-        className={cn(buttonVariants({ variant, size }), className)}
+      <Card
         ref={ref}
+        className={cn('p-6 space-y-4', className)}
         {...props}
-      />
+      >
+        <h3 className="text-lg font-semibold">{title}</h3>
+        <p className="text-muted-foreground">{description}</p>
+        {onAction && (
+          <Button onClick={onAction} variant="outline">
+            Learn More
+          </Button>
+        )}
+      </Card>
     )
   }
 )
-Button.displayName = "Button"
+FeatureCard.displayName = 'FeatureCard'
 
-// Form Hook Usage
-import { useForm } from "react-hook-form"
-import { zodResolver } from "@hookform/resolvers/zod"
-import { z } from "zod"
+// Custom Hook Pattern
+interface UseFeatureState<T> {
+  data: T | null
+  isLoading: boolean
+  error: Error | null
+  reload: () => Promise<void>
+}
+
+function useFeatureState<T>(
+  fetchFn: () => Promise<T>
+): UseFeatureState<T> {
+  const [data, setData] = React.useState<T | null>(null)
+  const [isLoading, setIsLoading] = React.useState(false)
+  const [error, setError] = React.useState<Error | null>(null)
+
+  const fetch = React.useCallback(async () => {
+    try {
+      setIsLoading(true)
+      setError(null)
+      const result = await fetchFn()
+      setData(result)
+    } catch (e) {
+      setError(e instanceof Error ? e : new Error('Unknown error'))
+    } finally {
+      setIsLoading(false)
+    }
+  }, [fetchFn])
+
+  React.useEffect(() => {
+    fetch()
+  }, [fetch])
+
+  return {
+    data,
+    isLoading,
+    error,
+    reload: fetch
+  }
+}
+
+// Theme Configuration
+const theme = {
+  extend: {
+    colors: {
+      border: 'hsl(var(--border))',
+      input: 'hsl(var(--input))',
+      ring: 'hsl(var(--ring))',
+      background: 'hsl(var(--background))',
+      foreground: 'hsl(var(--foreground))',
+      primary: {
+        DEFAULT: 'hsl(var(--primary))',
+        foreground: 'hsl(var(--primary-foreground))'
+      },
+      secondary: {
+        DEFAULT: 'hsl(var(--secondary))',
+        foreground: 'hsl(var(--secondary-foreground))'
+      }
+    },
+    borderRadius: {
+      lg: 'var(--radius)',
+      md: 'calc(var(--radius) - 2px)',
+      sm: 'calc(var(--radius) - 4px)'
+    }
+  }
+}
+
+// Form Pattern with Validation
+import { zodResolver } from '@hookform/resolvers/zod'
+import { useForm } from 'react-hook-form'
+import * as z from 'zod'
 
 const formSchema = z.object({
   username: z.string().min(2).max(50),
   email: z.string().email(),
+  role: z.enum(['admin', 'user'])
 })
 
-export function ProfileForm() {
+export function UserForm() {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      username: "",
-      email: "",
-    },
+      username: '',
+      email: '',
+      role: 'user'
+    }
   })
 
+  async function onSubmit(values: z.infer<typeof formSchema>) {
+    // Handle form submission
+  }
+
   return (
-    <form onSubmit={form.handleSubmit((data) => console.log(data))}>
-      {/* Form fields */}
+    <form onSubmit={form.handleSubmit(onSubmit)}>
+      {/* Form fields using Shadcn/UI components */}
     </form>
   )
 }
-```

@@ -1,98 +1,205 @@
 # Flutter Riverpod Development Instructions
 
 ## Project Context
-- Flutter development with Riverpod
-- State management best practices
-- Cross-platform development
-- Performance optimization
+- Flutter state management
+- Riverpod dependency injection
+- Reactive programming
+- SOLID principles
+- Clean architecture
 
 ## Code Style Guidelines
-- Use proper provider naming
-- Follow immutable state patterns
-- Implement proper dependency overrides
-- Use proper consumer widgets
-- Follow proper class organization
+- Provider organization
+- State immutability
+- Dependency injection
+- Error handling
+- Code modularity
 
 ## Architecture Patterns
-- Follow repository pattern
-- Use proper provider scoping
-- Implement proper state persistence
-- Follow proper navigation patterns
-- Use proper dependency injection
+- Provider patterns
+- Repository pattern
+- Service layer
+- State management
+- Dependency injection
 
 ## Testing Requirements
-- Test providers and states
-- Mock dependencies properly
-- Test widget interactions
-- Implement golden tests
-- Validate state transitions
+- Provider testing
+- Widget testing
+- Integration testing
+- State testing
+- Mock providers
 
 ## Documentation Standards
-- Document provider purposes
-- Include state diagrams
-- Document widget lifecycle
-- Maintain provider dependencies
-- Include usage examples
+- Provider documentation
+- State flow documentation
+- Architecture documentation
+- API documentation
+- Testing documentation
 
 ## Project-Specific Rules
 ### Riverpod Patterns
-- Use proper provider families
-- Implement proper state notifiers
-- Follow proper ref invalidation
-- Use proper provider modifiers
-- Implement proper error handling
-
-## Common Patterns
 ```dart
-// Provider Template
+// Provider Pattern
 @riverpod
-class CounterNotifier extends _$CounterNotifier {
+class UserNotifier extends _$UserNotifier {
   @override
-  int build() => 0;
+  FutureOr<User?> build() => null;
 
-  void increment() => state++;
-  void decrement() => state--;
-}
-
-// Repository Pattern
-@riverpod
-class UserRepository extends _$UserRepository {
-  @override
-  Future<User> build(String userId) async {
-    final response = await dio.get('/users/$userId');
-    return User.fromJson(response.data);
+  Future<void> fetchUser(String id) async {
+    state = const AsyncValue.loading();
+    state = await AsyncValue.guard(() => ref.read(userRepository).getUser(id));
   }
 
   Future<void> updateUser(User user) async {
-    await dio.put('/users/${user.id}', data: user.toJson());
-    ref.invalidateSelf();
+    state = const AsyncValue.loading();
+    await ref.read(userRepository).updateUser(user);
+    state = AsyncValue.data(user);
   }
 }
 
-// Widget Template
-class UserProfile extends ConsumerWidget {
-  const UserProfile({super.key, required this.userId});
+// Repository Provider
+@riverpod
+UserRepository userRepository(UserRepositoryRef ref) {
+  return UserRepositoryImpl(
+    ref.watch(apiClientProvider),
+    ref.watch(localStorageProvider),
+  );
+}
 
-  final String userId;
+// API Client Provider
+@riverpod
+ApiClient apiClient(ApiClientRef ref) {
+  return ApiClientImpl(ref.watch(dioProvider));
+}
+
+// Service Pattern
+@riverpod
+class AuthService extends _$AuthService {
+  @override
+  FutureOr<void> build() {}
+
+  Future<void> login(String email, String password) async {
+    state = const AsyncValue.loading();
+    state = await AsyncValue.guard(() async {
+      final result = await ref.read(authRepository).login(email, password);
+      ref.read(userNotifierProvider.notifier).setUser(result.user);
+      return result;
+    });
+  }
+}
+
+// Widget Pattern
+class UserProfilePage extends ConsumerWidget {
+  const UserProfilePage({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final userAsync = ref.watch(userRepositoryProvider(userId));
+    final userState = ref.watch(userNotifierProvider);
 
-    return userAsync.when(
-      data: (user) => UserProfileContent(user: user),
-      loading: () => const CircularProgressIndicator(),
-      error: (error, stack) => ErrorWidget(error.toString()),
+    return Scaffold(
+      body: userState.when(
+        data: (user) => user != null 
+          ? UserProfileView(user: user)
+          : const LoginPrompt(),
+        loading: () => const LoadingView(),
+        error: (error, stack) => ErrorView(error: error),
+      ),
     );
   }
 }
 
 // State Pattern
 @freezed
-class AuthState with _$AuthState {
-  const factory AuthState.unauthenticated() = _Unauthenticated;
-  const factory AuthState.authenticated(User user) = _Authenticated;
-  const factory AuthState.loading() = _Loading;
-  const factory AuthState.error(String message) = _Error;
+class UserState with _$UserState {
+  const factory UserState({
+    required User? user,
+    required bool isLoading,
+    required Option<String> errorMessage,
+  }) = _UserState;
+
+  factory UserState.initial() => UserState(
+    user: null,
+    isLoading: false,
+    errorMessage: none(),
+  );
 }
-```
+
+// Testing Pattern
+void main() {
+  group('UserNotifier Tests', () {
+    late ProviderContainer container;
+    late MockUserRepository mockRepository;
+
+    setUp(() {
+      mockRepository = MockUserRepository();
+      container = ProviderContainer(
+        overrides: [
+          userRepositoryProvider.overrideWithValue(mockRepository),
+        ],
+      );
+      addTearDown(container.dispose);
+    });
+
+    test('fetchUser success', () async {
+      final user = User(id: '1', name: 'Test');
+      when(mockRepository.getUser('1')).thenAnswer((_) async => user);
+
+      final notifier = container.read(userNotifierProvider.notifier);
+      await notifier.fetchUser('1');
+
+      final state = container.read(userNotifierProvider);
+      expect(state.value, user);
+    });
+  });
+}
+
+// Error Handling Pattern
+@riverpod
+class ErrorHandler extends _$ErrorHandler {
+  @override
+  void build() {}
+
+  void handleError(Object error, StackTrace? stackTrace) {
+    if (error is NetworkException) {
+      ref.read(snackbarProvider.notifier).show(
+        SnackbarData(
+          message: 'Network error occurred',
+          type: SnackbarType.error,
+        ),
+      );
+    } else if (error is ValidationException) {
+      ref.read(snackbarProvider.notifier).show(
+        SnackbarData(
+          message: error.message,
+          type: SnackbarType.warning,
+        ),
+      );
+    }
+  }
+}
+
+// Async Value Widget Pattern
+class AsyncValueWidget<T> extends StatelessWidget {
+  final AsyncValue<T> value;
+  final Widget Function(T data) onData;
+  final Widget Function()? onLoading;
+  final Widget Function(Object error, StackTrace? stackTrace)? onError;
+
+  const AsyncValueWidget({
+    required this.value,
+    required this.onData,
+    this.onLoading,
+    this.onError,
+    super.key,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return value.when(
+      data: onData,
+      loading: () => onLoading?.call() ?? 
+        const Center(child: CircularProgressIndicator()),
+      error: (error, stack) => onError?.call(error, stack) ?? 
+        ErrorView(error: error),
+    );
+  }
+}
