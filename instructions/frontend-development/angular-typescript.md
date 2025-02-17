@@ -1,118 +1,39 @@
-# Angular TypeScript Development Instructions
+# Angular TypeScript Development Guidelines
 
 ## Project Context
-- Modern Angular application development
-- TypeScript strict mode enabled
-- RxJS for reactive programming
-- NgRx for state management
-- Angular Material design system
+- Angular 18 with TypeScript
+- Jest for testing
+- Focus on performance, readability, and maintainability
 
 ## Code Style Guidelines
-- Follow official Angular style guide
-- Use TypeScript strict type checking
-- Implement proper interfaces and types
-- Follow functional programming principles
-- Maintain consistent file structure
+- Maximum line length: 80 characters
+- Maximum function parameters: 4
+- Maximum function length: 50 executable lines
+- Maximum nesting depth: 2 levels
+- Use forNext function from libs/smart-ngrx/src/common/for-next.function.ts instead of traditional loops
+- Follow configurations in .eslintrc.json, .prettierrc, .htmlhintrc, and .editorconfig
 
 ## Architecture Patterns
-- Feature-based module organization
-- Container and presentational components
-- Redux pattern with NgRx
-- Repository pattern for data access
-- Micro frontend architecture support
+- Maintain clear component structure
+- Proper separation of concerns
+- Smart and presentational components pattern
+- Follow Angular best practices for module organization
 
 ## Testing Requirements
-- Unit tests with Jasmine/Jest
-- E2E tests with Cypress/Protractor
-- Integration tests for services
-- State management testing
-- Component isolation testing
+- Jest as primary testing framework
+- Unit tests for components and services
+- Maintain high test coverage
+- Test both success and error scenarios
 
 ## Documentation Standards
-- TSDoc comments for public APIs
-- Component documentation
-- State management documentation
-- Architecture diagrams
-- API documentation
+- Preserve existing JSDoc comments during refactoring
+- Clear and concise documentation
+- Document public APIs and interfaces
+- Include usage examples for complex functionality
 
 ## Project-Specific Rules
-### Component Development
-```typescript
-// Component Best Practices
-@Component({
-  selector: 'app-feature',
-  template: `
-    <ng-container *ngIf="data$ | async as data">
-      <app-presentation
-        [data]="data"
-        (action)="onAction($event)">
-      </app-presentation>
-    </ng-container>
-  `,
-  changeDetection: ChangeDetectionStrategy.OnPush
-})
-export class FeatureComponent implements OnInit {
-  data$: Observable<Data>;
-  
-  constructor(private store: Store) {
-    this.data$ = this.store.select(selectData);
-  }
-  
-  onAction(event: ActionEvent): void {
-    this.store.dispatch(new Action(event));
-  }
-}
-
-// Service Pattern
-@Injectable({
-  providedIn: 'root'
-})
-export class DataService {
-  private readonly apiUrl = environment.apiUrl;
-  
-  constructor(private http: HttpClient) {}
-  
-  getData(): Observable<Data> {
-    return this.http.get<Data>(`${this.apiUrl}/data`).pipe(
-      catchError(this.handleError)
-    );
-  }
-  
-  private handleError(error: HttpErrorResponse): Observable<never> {
-    console.error('An error occurred:', error);
-    return throwError(() => error);
-  }
-}
-
-// State Management
-interface State {
-  data: Data[];
-  loading: boolean;
-  error: string | null;
-}
-
-const initialState: State = {
-  data: [],
-  loading: false,
-  error: null
-};
-
-// Effects Pattern
-@Injectable()
-export class DataEffects {
-  loadData$ = createEffect(() => 
-    this.actions$.pipe(
-      ofType(DataActionTypes.Load),
-      mergeMap(() => this.dataService.getData()
-        .pipe(
-          map(data => new LoadSuccess(data)),
-          catchError(error => of(new LoadFailure(error)))
-        ))
-    )
-  );
-  
-  constructor(
-    private actions$: Actions,
-    private dataService: DataService
-  ) {}
-}
+- Use TypeScript strict mode
+- Proper error handling patterns
+- Follow Angular dependency injection patterns
+- Include all required imports
+- Ensure proper naming of key components

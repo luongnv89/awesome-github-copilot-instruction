@@ -1,94 +1,125 @@
-# Angular with Novo Elements Development Instructions
+# Angular Novo Elements Development Instructions
 
 ## Project Context
-- Angular application development with Novo Elements
-- Enterprise UI component library
-- TypeScript-first approach
-- Modular architecture
+- Angular Elements development
+- Novo UI Framework integration
+- Web Components
+- Micro-frontend architecture
 
 ## Code Style Guidelines
 - Follow Angular style guide
-- Use TypeScript strict mode
-- Implement proper component patterns
-- Follow reactive programming patterns
-- Maintain consistent naming conventions
+- Use proper component lifecycle
+- Implement proper custom elements
+- Follow proper event handling
+- Use proper encapsulation
 
 ## Architecture Patterns
-- Feature module organization
-- Smart and presentational components
-- State management best practices
-- Dependency injection patterns
-- Proper routing implementation
+- Use proper custom elements
+- Implement proper shadow DOM
+- Follow proper data binding
+- Use proper event dispatching
+- Implement proper style isolation
 
 ## Testing Requirements
-- Unit tests for services and components
-- E2E testing with Cypress
-- Component testing with Angular Testing Library
-- Coverage requirements
-- Integration test patterns
+- Test custom elements
+- Validate shadow DOM
+- Test event handling
+- Implement integration tests
+- Test browser compatibility
 
 ## Documentation Standards
-- JSDoc for components and services
-- README for feature modules
-- API documentation
-- Architecture decision records
-- Component documentation
+- Document custom elements API
+- Include usage examples
+- Document event interface
+- Maintain browser support
+- Include integration guides
 
 ## Project-Specific Rules
-### Novo Elements Usage
-- Follow Novo Elements patterns
-- Implement proper theming
-- Use proper form controls
-- Follow accessibility guidelines
-- Maintain component hierarchy
+### Custom Elements
+- Use proper naming conventions
+- Implement proper attributes
+- Follow proper lifecycle hooks
+- Use proper property bindings
+- Implement proper event handling
 
 ## Common Patterns
 ```typescript
-// Component Template
+// Custom Element Template
+import { Component, Input, Output, EventEmitter } from '@angular/core';
+
 @Component({
-  selector: 'app-custom',
+  selector: 'novo-custom-element',
   template: `
-    <novo-card>
-      <novo-card-title>{{ title }}</novo-card-title>
-      <novo-card-content>
-        <novo-form [form]="form">
-          <!-- Form fields here -->
-        </novo-form>
-      </novo-card-content>
-    </novo-card>
+    <div class="custom-element">
+      <h2>{{title}}</h2>
+      <div class="content">
+        <ng-content></ng-content>
+      </div>
+      <button (click)="handleAction()">{{actionText}}</button>
+    </div>
   `,
-  changeDetection: ChangeDetectionStrategy.OnPush
+  styles: [`
+    :host {
+      display: block;
+      margin: 1em;
+    }
+  `]
 })
-export class CustomComponent implements OnInit {
-  @Input() title: string;
-  form: FormGroup;
+export class NovoCustomElement {
+  @Input() title: string = '';
+  @Input() actionText: string = 'Action';
+  @Output() action = new EventEmitter<void>();
 
-  constructor(private fb: FormBuilder) {}
-
-  ngOnInit(): void {
-    this.initForm();
-  }
-
-  private initForm(): void {
-    this.form = this.fb.group({
-      // Form controls here
-    });
+  handleAction() {
+    this.action.emit();
   }
 }
 
-// Service Template
-@Injectable({
-  providedIn: 'root'
+// Element Registration
+import { createCustomElement } from '@angular/elements';
+import { NovoCustomElement } from './novo-custom-element';
+
+@NgModule({
+  declarations: [NovoCustomElement],
+  imports: [CommonModule],
 })
-export class CustomService {
-  private state$ = new BehaviorSubject<State>(initialState);
-
-  constructor(private http: HttpClient) {}
-
-  getData(): Observable<Data> {
-    return this.http.get<Data>('/api/endpoint').pipe(
-      tap(data => this.updateState(data)),
-      catchError(this.handleError)
-    );
+export class NovoElementsModule {
+  constructor(injector: Injector) {
+    const element = createCustomElement(NovoCustomElement, { injector });
+    customElements.define('novo-custom-element', element);
   }
 }
+
+// Event Handling
+@Component({
+  template: `
+    <div class="wrapper">
+      <novo-custom-element
+        [title]="'Custom Element'"
+        [actionText]="'Click Me'"
+        (action)="handleAction($event)">
+        <p>Content projection example</p>
+      </novo-custom-element>
+    </div>
+  `
+})
+export class WrapperComponent {
+  handleAction(event: any) {
+    console.log('Custom element action', event);
+  }
+}
+
+// Style Encapsulation
+const styles = `
+  :host {
+    --primary-color: #007bff;
+    --font-family: 'Roboto', sans-serif;
+  }
+  
+  .custom-element {
+    font-family: var(--font-family);
+    border: 1px solid var(--primary-color);
+    padding: 1em;
+  }
+`;
+```
