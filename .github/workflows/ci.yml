@@ -15,7 +15,7 @@ jobs:
         with:
           node-version: 18
       - name: Generate prompts file
-        run: node scripts/generate_prompt_data.js
+        run: node scripts/generate_instruction_data.js
       - name: Navigate to website directory
         run: cd website/
       - name: Install dependencies
