@@ -96,4 +96,3 @@ fun Screen(
         else -> Content(uiState.data)
     }
 }
-```
