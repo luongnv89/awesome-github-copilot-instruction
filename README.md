@@ -19,33 +19,6 @@ Custom instructions allow you to enhance GitHub Copilot's responses by providing
 
 Custom instructions are applied automatically in Chat view, Quick Chat, and Inline Chat, making them a powerful tool for maintaining consistency across your development workflow.
 
-## Contents
-
-- [Awesome GitHub Copilot Custom Instructions](#awesome-github-copilot-custom-instructions-)
-  - [Why Custom Instructions?](#why-custom-instructions)
-  - [Contents](#contents)
-  - [Instructions](#instructions)
-    - [General Development](#general-development)
-    - [Frontend Development](#frontend-development)
-    - [Backend Development](#backend-development)
-    - [Full Stack Development](#full-stack-development)
-    - [Mobile Development](#mobile-development)
-    - [Testing](#testing)
-    - [DevOps](#devops)
-    - [Language-Specific](#language-specific)
-  - [How to Use](#how-to-use)
-  - [Contributing](#contributing)
-  - [License](#license)
-
-## Instructions
-
-### General Development
-- [Clean Code Practices](./instructions/clean-code-practices.md)
-- [SOLID Principles](./instructions/solid-principles.md)
-- [Code Documentation](./instructions/code-documentation.md)
-
-// ...Add more sections with actual instruction files...
-
 ## How to Use
 
 ### Method 1: Using Settings
