@@ -1,0 +1,10 @@
+{
+  "name": "github-copilot-instructions-scripts",
+  "version": "1.0.0",
+  "description": "Scripts for generating GitHub Copilot instruction data",
+  "private": true,
+  "dependencies": {
+    "@faker-js/faker": "^9.3.0",
+    "gray-matter": "^4.0.3"
+  }
+}

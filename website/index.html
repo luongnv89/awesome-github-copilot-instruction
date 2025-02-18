@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/png" href="/github-copilot-logo.png" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Discover and share custom instructions for enhancing your GitHub Copilot experience. Browse curated instructions for different programming languages, frameworks, and development scenarios." />
+    <meta name="keywords" content="GitHub Copilot, AI Programming, Coding Instructions, Development Guidelines, Custom Instructions" />
+    <meta property="og:title" content="GitHub Copilot Instructions" />
+    <meta property="og:description" content="Curated collection of custom instructions for GitHub Copilot to improve your development workflow." />
+    <meta property="og:image" content="/github-copilot-logo.png" />
+    <meta property="og:url" content="https://github-copilot-instructions.com" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <title>GitHub Copilot Instructions</title>
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-33N7221J1T"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+
+      gtag('config', 'G-33N7221J1T');
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+    <script>
+      // Check for dark mode preference on load
+      if (localStorage.getItem('darkMode') === 'true' ||
+          (!localStorage.getItem('darkMode') && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+        document.documentElement.classList.add('dark');
+      }
+    </script>
+  </body>
+</html>

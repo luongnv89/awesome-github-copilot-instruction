@@ -1,0 +1,68 @@
+/* GitHub Copilot Theme Colors */
+:root {
+  --copilot-primary: #58a6ff;
+  --copilot-secondary: #0d1117;
+  --copilot-accent: #238636;
+  --copilot-text: #c9d1d9;
+  --copilot-bg: #0d1117;
+  --copilot-border: #30363d;
+  --copilot-hover: #1f6feb;
+}
+
+/* Light mode overrides */
+:root[class='light'] {
+  --copilot-primary: #0969da;
+  --copilot-secondary: #ffffff;
+  --copilot-accent: #238636;
+  --copilot-text: #24292f;
+  --copilot-bg: #ffffff;
+  --copilot-border: #d0d7de;
+  --copilot-hover: #0969da;
+}
+
+/* GitHub Copilot specific utility classes */
+.copilot-card {
+  @apply bg-white dark:bg-gray-800 rounded-lg shadow-sm hover:shadow-md transition-all duration-300 border border-gray-200 dark:border-gray-700;
+}
+
+.copilot-button {
+  @apply px-4 py-2 rounded-full bg-[var(--copilot-primary)] text-white hover:bg-[var(--copilot-hover)] transition-colors duration-200;
+}
+
+.copilot-tag {
+  @apply px-2 py-1 rounded-full text-xs font-medium bg-opacity-10 transition-colors duration-200;
+}
+
+.copilot-input {
+  @apply w-full px-4 py-2 rounded-lg border-2 border-gray-200 dark:border-gray-700 
+         bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 
+         focus:outline-none focus:border-[var(--copilot-primary)] 
+         transition-colors duration-200;
+}
+
+/* GitHub Copilot specific text styles */
+.copilot-heading {
+  @apply text-2xl font-bold text-gray-900 dark:text-white;
+}
+
+.copilot-subheading {
+  @apply text-lg text-gray-600 dark:text-gray-400;
+}
+
+/* GitHub Copilot specific layout components */
+.copilot-container {
+  @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
+}
+
+.copilot-grid {
+  @apply grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4;
+}
+
+/* GitHub Copilot specific interaction states */
+.copilot-hover {
+  @apply hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors duration-200;
+}
+
+.copilot-active {
+  @apply bg-blue-50 dark:bg-blue-900 border-blue-500 dark:border-blue-400;
+}

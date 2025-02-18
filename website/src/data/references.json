@@ -1,0 +1,14 @@
+[
+  {
+    "url": "https://docs.github.com/en/copilot",
+    "title": "GitHub Copilot Documentation",
+    "description": "Official documentation for GitHub Copilot, covering setup, customization, and best practices",
+    "source": "GitHub Docs"
+  },
+  {
+    "url": "https://github.com/features/copilot",
+    "title": "GitHub Copilot Features",
+    "description": "Overview of GitHub Copilot's features and capabilities for AI-powered code completion",
+    "source": "GitHub"
+  }
+]
