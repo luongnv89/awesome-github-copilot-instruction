@@ -451,7 +451,7 @@ const App = () => {
           <div className="flex flex-col items-center justify-center py-16 space-y-8">
             <div className="text-center space-y-6 max-w-3xl mx-auto">
               <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-gray-900 dark:text-white">
-                Your Hub for GitHub Copilot Instructions
+                Awesome Github Copilot Instruction
               </h1>
               <p className="text-xl text-gray-600 dark:text-gray-400">
                 Explore curated, custom instructions that empower your coding and AI interactions.
