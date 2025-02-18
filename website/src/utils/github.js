@@ -1,6 +1,6 @@
 // utils/github.js
 export const fetchRepoData = async () => {
-  const repoUrl = 'https://api.github.com/repos/the-prompt-collection/the-prompt-collection.github.io';
+  const repoUrl = 'https://api.github.com/repos/luongnv89/awesome-github-copilot-instruction';
   const commitsUrl = `${repoUrl}/commits/main`;
   const workflowsUrl = `${repoUrl}/actions/runs`;
 
