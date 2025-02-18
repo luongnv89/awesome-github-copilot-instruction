@@ -5,7 +5,7 @@ import SearchBar from './components/SearchBar/SearchBar';
 import TagFilter from './components/TagFilter/TagFilter';
 import InstructionList from './components/InstructionList/InstructionList';
 import ReferencesSection from './components/ReferencesSection/ReferencesSection';
-import SelectedInstructionModal from './components/SelectedInstructionModal/SelectedPromptModal';
+import SelectedInstructionModal from './components/SelectedInstructionModal/SelectedInstructionModal';
 import Footer from './components/Footer/Footer';
 import instructions from './data/instructions.json';
 import references from './data/references.json'; // Updated import path
@@ -16,11 +16,11 @@ import TopInstructions from './components/TopInstructions';
 import {
   loadStoredState,
   saveDarkMode,
-  savePromptUsageStats,
+  saveInstructionUsageStats,
   saveToolUsageStats,
-  saveFavoritePrompts,
   saveReferencesData,
-  loadReferencesData
+  loadReferencesData,
+  saveFavoriteInstructions
 } from './utils/localStorage';
 
 const PAGE_SIZE = 20; // Number of instructions to load at a time
@@ -81,6 +81,12 @@ const App = () => {
     return acc;
   }, {});
 
+  // Add icons for each category
+  const categoryIcons = {};
+  Object.keys(groupedInstructions).forEach(category => {
+    categoryIcons[category] = "📁";  // Default icon for categories
+  });
+
   // Filter instructions based on search query and selected tags
   const filterInstructions = useCallback(() => {
     return instructions.filter((instruction) => {
@@ -121,7 +127,9 @@ const App = () => {
   };
 
   // Debounced search handler
-  const handleSearch = debounce((query) => {
+  const handleSearch = debounce((searchQuery) => {
+    // If searchQuery is an array, join it into a string
+    const query = Array.isArray(searchQuery) ? searchQuery.join(" ") : searchQuery;
     setSearchQuery(query);
     setPage(1);
     setVisibleInstructions([]);
@@ -405,7 +413,7 @@ const App = () => {
         ...prevStats,
         [instruction.filename]: (prevStats[instruction.filename] || 0) + 1,
       };
-      savePromptUsageStats(newStats);
+      saveInstructionUsageStats(newStats);
       return newStats;
     });
     setSelectedInstruction(instruction);
@@ -427,7 +435,7 @@ const App = () => {
       const newFavorites = isFavorite
         ? prev.filter(filename => filename !== instruction.filename)
         : [...prev, instruction.filename];
-      saveFavoritePrompts(newFavorites);
+      saveFavoriteInstructions(newFavorites);
       return newFavorites;
     });
   };
@@ -505,6 +513,7 @@ const App = () => {
             onCategoryClick={handleCategoryClick}
             onBackToCategories={handleBackToCategories}
             groupedInstructions={groupedInstructions}
+            categoryIcons={categoryIcons}  // <-- new prop for icons
             showCategoryList={showCategoryList}
             totalInstructions={totalInstructions}
             totalFilteredInstructions={getTotalFilteredInstructions()}

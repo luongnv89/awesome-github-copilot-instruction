@@ -2,13 +2,20 @@
 import React from 'react';
 
 const SearchBar = ({ onSearch }) => {
+  const handleChange = (e) => {
+    const input = e.target.value;
+    // Split input into words and filter out any empty strings
+    const words = input.split(/\s+/).filter(Boolean);
+    onSearch(words);
+  };
+
   return (
     <div className="w-full px-2 sm:px-0">
       <div className="relative">
         <input
           type="text"
           placeholder="Search GitHub Copilot instructions..."
-          onChange={(e) => onSearch(e.target.value)}
+          onChange={handleChange}
           className="w-full px-4 sm:px-6 py-3 sm:py-4 text-base sm:text-lg rounded-full border-2 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:border-blue-500 dark:focus:border-blue-400 transition-colors duration-200 shadow-sm"
         />
         <div className="absolute inset-y-0 right-0 flex items-center pr-6 pointer-events-none">

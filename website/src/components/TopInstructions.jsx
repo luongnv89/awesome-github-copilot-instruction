@@ -60,7 +60,7 @@ const InstructionList = ({ instructions, handleSelectInstruction, title, onRemov
   );
 };
 
-const TopPrompts = ({ topInstructions, favoriteInstructions, handleSelectInstruction, onRemoveFavorite }) => {
+const TopInstructions = ({ topInstructions, favoriteInstructions, handleSelectInstruction, onRemoveFavorite }) => {
   return (
     <section className="mt-8">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -82,4 +82,4 @@ const TopPrompts = ({ topInstructions, favoriteInstructions, handleSelectInstruc
   );
 };
 
-export default TopPrompts;
+export default TopInstructions;

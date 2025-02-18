@@ -16,9 +16,6 @@ export const saveInstructionUsageStats = (stats) => {
   localStorage.setItem('instructionUsageStats', JSON.stringify(stats));
 };
 
-export const savePromptUsageStats = (stats) => {
-  localStorage.setItem('instructionUsageStats', JSON.stringify(stats));
-};
 
 export const loadToolUsageStats = () => {
   const saved = localStorage.getItem('toolUsageStats');
@@ -37,10 +34,6 @@ export const loadFavoriteInstructions = () => {
 export const saveFavoriteInstructions = (favorites) => {
   localStorage.setItem('favoriteInstructions', JSON.stringify(favorites));
 };
-
-export function saveFavoritePrompts(favorites) {
-  localStorage.setItem('favoriteInstructions', JSON.stringify(favorites));
-}
 
 export const loadReferencesData = () => {
   const saved = localStorage.getItem('referencesData');
