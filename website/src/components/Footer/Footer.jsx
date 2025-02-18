@@ -72,16 +72,16 @@ const Footer = () => {
             <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-gray-100">Community</h3>
             <div className="space-y-2">
               <a
-                href="https://x.com/GithubCopilot"
+                href="https://x.com/luongnv89"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex items-center text-gray-700 hover:text-blue-500 dark:text-gray-300 dark:hover:text-blue-400"
               >
                 <FaTwitter className="mr-2" />
-                Follow GitHub Copilot
+                Follow me
               </a>
               <p className="text-sm text-gray-600 dark:text-gray-400">
-                Join our community to share and discover new GitHub Copilot instructions
+                Contact me directly for any questions or feedback about this project.
               </p>
             </div>
           </div>
