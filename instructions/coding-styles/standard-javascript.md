@@ -1,0 +1,69 @@
+# JavaScript Standard Style - Summary
+
+- **Formatting & Spacing**
+  - Use 2 spaces for indentation
+  - Use single quotes for strings (except to avoid escaping)
+  - Add space after keywords and before function parentheses
+  - Use spaces inside single line blocks
+  - Infix operators must be spaced
+  - Commas should have space after them
+  - Keep else statements on same line as curly braces
+  - Add spaces inside comments
+  - No tabs, only spaces
+  - No trailing whitespace
+  - End files with a newline
+  - No multiple blank lines
+
+- **Syntax Practices**
+  - No unused variables
+  - Always use triple equals (`===`) instead of double equals
+  - Keep else statements on the same line as closing braces
+  - For multi-line if statements, use curly braces
+  - Multi-line ternary operators: place `?` and `:` on their own lines
+  - For var declarations, write each in its own statement
+  - Wrap conditional assignments with parentheses
+  - Use camelCase for naming variables and functions
+  - No trailing commas in objects/arrays
+  - Place commas at end of current line, not beginning of next
+  - Dot should be on same line as property
+  - Constructor names must begin with capital letter
+  - No semicolons
+
+- **Error Handling**
+  - Always handle the `err` function parameter
+  - Throw only Error objects, not literals
+
+- **Best Practices**
+  - No `eval()` or implied eval
+  - Declare browser globals with a `/* global */` comment
+  - Constructor with no arguments must be invoked with parentheses
+  - Objects must contain getter when setter is defined
+  - Use array literals instead of constructors
+  - Avoid using `arguments.callee` and `arguments.caller`
+  - Avoid modifying class declarations or `const` variables
+  - No control characters in regular expressions
+  - No `debugger` statements
+  - No `delete` on variables
+  - No duplicate arguments, class members, keys, or case labels
+  - Use a single import statement per module
+  - Use `break` to prevent fallthrough in switch cases
+  - No extending native objects
+  - Use `isNaN()` when checking for `NaN`
+  - Always wrap IIFEs (Immediately Invoked Function Expressions)
+  - Avoid Yoda conditions
+
+- **Code Structure**
+  - No duplicate arguments in function definitions
+  - No duplicate keys in object literals
+  - No empty character classes in regular expressions
+  - No reassigning exceptions in catch clauses
+  - No unnecessary function binding
+  - No unnecessary boolean casts
+  - No unnecessary parentheses around function expressions
+  - No floating decimals (use `0.5` not `.5`)
+  - No reassigning function declarations or read-only globals
+  - No function declarations in nested blocks
+  - No irregular whitespace
+  - No using `__iterator__`, `__proto__`, or labels
+  - No sparse arrays
+  - No unreachable code after `return`, `throw`, `continue`, and `break`
